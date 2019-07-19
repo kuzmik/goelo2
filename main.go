@@ -14,6 +14,9 @@ import (
 )
 
 var (
+	//Debug - dump objects to console for debugging purposes
+	Debug bool
+
 	//Token - the authentication token that was provided when the bot was created in discord. Stored in 1password
 	Token string
 
@@ -22,8 +25,9 @@ var (
 )
 
 func init() {
+	flag.BoolVar(&Debug, "d", false, "Debug")
 	flag.StringVar(&Token, "t", "", "Bot token")
-	flag.StringVar(&TokenFile, "f", "", "File that contains the bot token")
+	flag.StringVar(&TokenFile, "f", "env", "File that contains the bot token")
 	flag.Parse()
 }
 
@@ -49,7 +53,9 @@ func main() {
 		return
 	}
 
+	dg.AddHandler(botReady)
 	dg.AddHandler(messageCreate)
+	dg.AddHandler(messageUpdate)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -69,36 +75,51 @@ func main() {
 }
 
 // This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the autenticated bot has access to.
+// `Message` is created on any `Channel` that the autenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself; not required, but a good practice.
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
-	// get the `Guild` which is the stupid name for a server
-	guild, err := s.State.Guild(m.GuildID)
-	if err != nil {
-		fmt.Println("Failure getting guild:", err)
+	// Dump the `MessageCreate` struct to console
+	if Debug == true {
+		spew.Dump(m)
 	}
 
-	// get the `Channel` name because APPARENTLY it isnt included in `m`
-	channel, err := s.State.Channel(m.ChannelID)
+	// Get the `Channel` name because APPARENTLY it isnt included in `m`
+	channel := ""
+	_channel, err := s.State.Channel(m.ChannelID)
 	if err != nil {
 		fmt.Println("Failure getting channel:", err)
 	}
 
+	// Don't accept DMs or any of the other channel types for now
+	if _channel.Type != discordgo.ChannelTypeGuildText {
+		return
+	}
+
+	if _channel.Name == "" {
+		channel = "PRIVMSG"
+	} else {
+		channel = _channel.Name
+	}
+
+	// get the `Guild` which is the stupid name for a server
+	server := ""
+	if m.GuildID == "" {
+		server = "PRIVMSG"
+	} else {
+		_guild, err := s.State.Guild(m.GuildID)
+
+		if err != nil {
+			fmt.Println("Failure getting guild:", err)
+		}
+		server = _guild.Name
+	}
+
 	// All that work to print this to the console.
-	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", m.Message.Timestamp, guild.Name, channel.Name, m.Author, m.Message.Content)
-
-	// Some debug output
-	if m.Message.Content == ".debugMessage" {
-		spew.Dump(m)
-	}
-
-	if m.Message.Content == ".debugState" {
-		spew.Dump(m)
-	}
+	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", m.Message.Timestamp, server, channel, m.Author, m.Message.Content)
 
 	// If the message is "ping" reply with "Pong!"
 	if m.Message.Content == "ping" {
@@ -107,4 +128,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println("Failure sending message:", err)
 		}
 	}
+}
+
+// This function will be called (due to AddHandler above) every time a
+// `Message` is changed on any `Channel` that the autenticated bot has access to.
+func messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
+	if Debug == true {
+		spew.Dump(m)
+	}
+}
+
+// This function will be called (due to AddHandler above) when the bot receives
+// the "ready" event from Discord.
+func botReady(s *discordgo.Session, event *discordgo.Ready) {
+	// Set the playing status... for fun?
+	s.UpdateStatus(0, "!honk")
 }
