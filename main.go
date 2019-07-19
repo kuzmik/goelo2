@@ -8,9 +8,11 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/getsentry/sentry-go"
 )
 
 var (
@@ -25,13 +27,11 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&Debug, "d", false, "Debug")
+	flag.BoolVar(&Debug, "d", false, "Debug mode prints extra data to the console")
 	flag.StringVar(&Token, "t", "", "Bot token")
 	flag.StringVar(&TokenFile, "f", "env", "File that contains the bot token")
 	flag.Parse()
-}
 
-func main() {
 	// If a token file is specified, read that.
 	if TokenFile != "" {
 		dat, err := ioutil.ReadFile(TokenFile)
@@ -42,14 +42,22 @@ func main() {
 		Token = strings.TrimSpace(string(dat))
 	}
 
+	// If no there is no token specified, either via commandline or via file, bail out
 	if Token == "" {
-		fmt.Println("You need to specify a token with -t")
+		fmt.Println("You need to specify a token. Use --help for help")
 		return
 	}
 
+	// Set up the sentry reportig
+	sentry.Init(sentry.ClientOptions{
+		Dsn: "https://3779a47dff1f4fb08d8c16e2f73f90f9@sentry.io/1509313",
+	})
+}
+
+func main() {
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		handleError("Error creating bot", err)
 		return
 	}
 
@@ -60,7 +68,7 @@ func main() {
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
+		handleError("Error during connecting:", err)
 		return
 	}
 
@@ -72,6 +80,13 @@ func main() {
 
 	// Cleanly close down the Discord session.
 	dg.Close()
+}
+
+// Handles all errors, which includes sending to sentry
+func handleError(message string, err error) {
+	fmt.Println(message, err)
+	sentry.CaptureException(err)
+	sentry.Flush(time.Second * 5)
 }
 
 // This function will be called (due to AddHandler above) every time a new
