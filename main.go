@@ -76,17 +76,27 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	// get the channel name because APPARENTLY it isnt included in `m`
+	// get the `Guild` which is the stupid name for a server
+	guild, err := s.State.Guild(m.GuildID)
+	if err != nil {
+		fmt.Println("Failure getting guild:", err)
+	}
+
+	// get the `Channel` name because APPARENTLY it isnt included in `m`
 	channel, err := s.State.Channel(m.ChannelID)
 	if err != nil {
 		fmt.Println("Failure getting channel:", err)
 	}
 
 	// All that work to print this to the console.
-	fmt.Printf("[%v] [%s] [%s] %s\n", m.Message.Timestamp, channel.Name, m.Author, m.Message.Content)
+	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", m.Message.Timestamp, guild.Name, channel.Name, m.Author, m.Message.Content)
 
 	// Some debug output
-	if m.Message.Content == "spew" {
+	if m.Message.Content == ".debugMessage" {
+		spew.Dump(m)
+	}
+
+	if m.Message.Content == ".debugState" {
 		spew.Dump(m)
 	}
 

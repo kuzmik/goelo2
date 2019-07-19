@@ -20,7 +20,7 @@ all: clean build
 $(TARGET): $(SRC)
 	@go build $(LDFLAGS) -o $(TARGET)
 
-build: $(TARGET)
+build: clean $(TARGET)
 	@true
 
 clean:
@@ -32,11 +32,11 @@ check:
 	@go vet ${SRC}
 
 # cross compile for linux
-linux: $(TARGET)
+linux: clean $(TARGET)
 	@GOOS=linux go build $(STRIP_LDFLAGS) -o $(TARGET)
 
 run: build
 	@./$(TARGET) -f env
 
-strip: build
+strip:
 	@upx --brute $(TARGET)
