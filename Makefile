@@ -36,7 +36,7 @@ linux: $(TARGET)
 	@GOOS=linux go build $(STRIP_LDFLAGS) -o $(TARGET)
 
 run: build
-	@./$(TARGET) -t `cat env`
+	@./$(TARGET) -f env
 
 strip: build
 	@upx --brute $(TARGET)

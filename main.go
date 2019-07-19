@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,14 +16,28 @@ import (
 var (
 	//Token - the authentication token that was provided when the bot was created in discord. Stored in 1password
 	Token string
+
+	//TokenFile - file that contains the token, to be read on program start. Keeps the token out of the processlist for shared hosts
+	TokenFile string
 )
 
 func init() {
-	flag.StringVar(&Token, "t", "", "Bot Token")
+	flag.StringVar(&Token, "t", "", "Bot token")
+	flag.StringVar(&TokenFile, "f", "", "File that contains the bot token")
 	flag.Parse()
 }
 
 func main() {
+	// If a token file is specified, read that.
+	if TokenFile != "" {
+		dat, err := ioutil.ReadFile(TokenFile)
+		if err != nil {
+			panic(err)
+		}
+
+		Token = strings.TrimSpace(string(dat))
+	}
+
 	if Token == "" {
 		fmt.Println("You need to specify a token with -t")
 		return
