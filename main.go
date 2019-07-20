@@ -133,8 +133,25 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		server = _guild.Name
 	}
 
+	timestamp, _ := m.Message.Timestamp.Parse()
+
 	// All that work to print this to the console.
-	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", m.Message.Timestamp, server, channel, m.Author, m.Message.Content)
+	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", timestamp, server, channel, m.Author, m.Message.Content)
+
+	author := fmt.Sprintf("%s#%s", m.Author.Username, m.Author.Discriminator)
+
+	msg := ChatMessage{
+		Timestamp: timestamp,
+		ServerID:  m.Message.GuildID,
+		Server:    server,
+		ChannelID: m.ChannelID,
+		Channel:   channel,
+		UserID:    m.Author.ID,
+		User:      author,
+		Message:   m.Message.Content,
+	}
+
+	msg.Save()
 
 	// If the message is "ping" reply with "Pong!"
 	if m.Message.Content == "ping" {

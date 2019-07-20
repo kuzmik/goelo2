@@ -1,3 +1,9 @@
+# secrets file
 env
+
+# binaries of various sorts
 goelo
 goelo.upx
+
+# database
+bebot.sqlite3
