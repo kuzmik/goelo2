@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,9 +27,10 @@ var (
 	TokenFile string
 )
 
+// Config - holds the application config state, as read from the json file
 type Config struct {
 	Discord struct {
-		ApiKey string `json:"api_key"`
+		APIKey string `json:"api_key"`
 	} `json:"discord"`
 }
 
@@ -49,7 +51,7 @@ func init() {
 		var cfg Config
 		json.Unmarshal(jsonData, &cfg)
 
-		Token = cfg.Discord.ApiKey
+		Token = cfg.Discord.APIKey
 	}
 
 	// If no there is no token specified, either via commandline or via file, bail out
@@ -110,6 +112,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Dump the `MessageCreate` struct to console
 	if Debug == true {
 		spew.Dump(m)
+		// spew.Dump(s.GuildRoles(m.GuildID))
 	}
 
 	// Get the `Channel` name because APPARENTLY it isnt included in `m`
@@ -144,9 +147,47 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	timestamp, _ := m.Message.Timestamp.Parse()
+	realMessage, err := m.Message.ContentWithMoreMentionsReplaced(s)
+	if err != nil {
+		realMessage = m.Message.Content
+	}
 
 	// All that work to print this to the console.
-	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", timestamp, server, channel, m.Author, m.Message.Content)
+	fmt.Printf("[%v] [%s] [%s] [%s] %s\n", timestamp, server, channel, m.Author, realMessage)
+
+	// If message is !honk, markov it up
+	if m.Message.Content == "!honk" {
+		//Bebot#Babble
+		shit := Babble()
+		_, err := s.ChannelMessageSend(m.ChannelID, shit)
+		if err != nil {
+			handleError("Failure sending message:", err)
+		}
+	}
+
+	// If the message is "ping" reply with "Pong!"
+	if m.Message.Content == "ping" {
+		_, err := s.ChannelMessageSend(m.ChannelID, "pong")
+		if err != nil {
+			handleError("Failure sending message:", err)
+		}
+	}
+
+	// Ignore anything that starts with ! for logging and markov purposes
+	if strings.HasPrefix(m.Message.Content, "!") {
+		return
+	}
+
+	// Don't log/markov private channels
+	if Debug == true {
+		spew.Dump(_channel.PermissionOverwrites)
+	}
+	for _, perm := range _channel.PermissionOverwrites {
+		if perm.Deny != 0 {
+			// there is a DENY permission setup for SOMEONE or SOMETHING, so bail on outta here
+			return
+		}
+	}
 
 	author := fmt.Sprintf("%s#%s", m.Author.Username, m.Author.Discriminator)
 
@@ -158,18 +199,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		Channel:   channel,
 		UserID:    m.Author.ID,
 		User:      author,
-		Message:   m.Message.Content,
+		Message:   realMessage,
 	}
 
 	msg.Save()
-
-	// If the message is "ping" reply with "Pong!"
-	if m.Message.Content == "ping" {
-		_, err := s.ChannelMessageSend(m.ChannelID, "pong")
-		if err != nil {
-			fmt.Println("Failure sending message:", err)
-		}
-	}
 }
 
 // This function will be called (due to AddHandler above) every time a

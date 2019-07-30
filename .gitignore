@@ -5,11 +5,7 @@ config/secrets.json
 goelo
 goelo.upx
 
-# database
-bebot.sqlite3
-
-# experimental crap
-attic
-
-# jacks poetry as markov chains
+# data of various types.
+data/bebot.sqlite3
 data/jack.json
+data/model.json
