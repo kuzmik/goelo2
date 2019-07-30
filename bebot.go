@@ -1,4 +1,4 @@
-package bebot
+package main
 
 import (
 	"database/sql"
