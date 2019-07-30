@@ -6,4 +6,8 @@ goelo
 goelo.upx
 
 # database
-bebot.sqlite3
+bebot/bebot.sqlite3
+bebot/model.json
+
+# old shit
+attic

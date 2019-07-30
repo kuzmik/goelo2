@@ -13,6 +13,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/getsentry/sentry-go"
+	"github.com/kuzmik/goelo2"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 	TokenFile string
 )
 
-type Config struct {
+type DiscordConfig struct {
 	Discord struct {
 		ApiKey string `json:"api_key"`
 	} `json:"discord"`
@@ -46,7 +47,7 @@ func init() {
 			return
 		}
 
-		var cfg Config
+		var cfg DiscordConfig
 		json.Unmarshal(jsonData, &cfg)
 
 		Token = cfg.Discord.ApiKey
@@ -81,6 +82,9 @@ func main() {
 		handleError("Error during connecting:", err)
 		return
 	}
+
+	// start up the twitter monitor
+	//go startStream()
 
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")

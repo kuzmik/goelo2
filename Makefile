@@ -36,7 +36,7 @@ linux: clean $(TARGET)
 	@GOOS=linux go build $(STRIP_LDFLAGS) -o $(TARGET)
 
 run: build
-	@./$(TARGET) -f env
+	@./$(TARGET) -f ./config/secrets.json
 
 strip:
 	@upx --brute $(TARGET)
