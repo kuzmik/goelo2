@@ -7,3 +7,9 @@ goelo.upx
 
 # database
 bebot.sqlite3
+
+# experimental crap
+attic
+
+# jacks poetry as markov chains
+data/jack.json
