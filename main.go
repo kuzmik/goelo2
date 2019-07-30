@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -26,20 +26,30 @@ var (
 	TokenFile string
 )
 
+type Config struct {
+	Discord struct {
+		ApiKey string `json:"api_key"`
+	} `json:"discord"`
+}
+
 func init() {
 	flag.BoolVar(&Debug, "d", false, "Debug mode prints extra data to the console")
-	flag.StringVar(&Token, "t", "", "Bot token")
-	flag.StringVar(&TokenFile, "f", "env", "File that contains the bot token")
+	flag.StringVar(&Token, "t", "", "Discord bot token")
+	flag.StringVar(&TokenFile, "f", "config/secrets.json", "File that contains the bot token")
 	flag.Parse()
 
 	// If a token file is specified, read that.
 	if TokenFile != "" {
-		dat, err := ioutil.ReadFile(TokenFile)
+		jsonData, err := ioutil.ReadFile(TokenFile)
 		if err != nil {
-			panic(err)
+			fmt.Println("Error reading JSON data:", err)
+			return
 		}
 
-		Token = strings.TrimSpace(string(dat))
+		var cfg Config
+		json.Unmarshal(jsonData, &cfg)
+
+		Token = cfg.Discord.ApiKey
 	}
 
 	// If no there is no token specified, either via commandline or via file, bail out

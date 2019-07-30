@@ -1,5 +1,5 @@
 # secrets file
-env
+config/secrets.json
 
 # binaries of various sorts
 goelo
