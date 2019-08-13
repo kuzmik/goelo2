@@ -1,4 +1,4 @@
-package main
+package bebot
 
 import (
 	"database/sql"
@@ -64,7 +64,10 @@ func (c ChatMessage) Save() int64 {
 		fmt.Println(err)
 	}
 
-	rowID, _ := res.LastInsertId()
+	rowID, err := res.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	chain.Add(strings.Split(c.Message, " "))
 
@@ -83,6 +86,7 @@ func loadModel(modelFile string) (*gomarkov.Chain, error) {
 	if err != nil {
 		return chain, err
 	}
+
 	err = json.Unmarshal(data, &chain)
 	if err != nil {
 		return chain, err

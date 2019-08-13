@@ -29,7 +29,7 @@ clean:
 check:
 	@gofmt -s -l -w .
 	@golint .
-	@go vet ${SRC}
+	@go vet ./...
 
 # cross compile for linux
 linux: clean $(TARGET)

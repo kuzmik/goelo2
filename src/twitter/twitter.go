@@ -1,76 +1,73 @@
-package main
+package twitter
 
-// import (
-// 	"encoding/json"
-// 	"fmt"
-// 	"io/ioutil"
-// 	"log"
-// 	"os"
-// 	"os/signal"
-// 	"syscall"
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 
-// 	// "github.com/davecgh/go-spew/spew"
-// 	"github.com/dghubble/go-twitter/twitter"
-// 	"github.com/dghubble/oauth1"
-// )
+	// "github.com/davecgh/go-spew/spew"
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
+)
 
-// type Config struct {
-// 	Twitter struct {
-// 		ScreenName     string `json:"screen_name"`
-// 		ConsumerKey    string `json:"consumer_key"`
-// 		ConsumerSecret string `json:"consumer_secret"`
-// 		AccessToken    string `json:"access_token"`
-// 		AccessSecret   string `json:"access_secret"`
-// 	} `json:"twitter"`
-// }
+type Config struct {
+	Twitter struct {
+		ScreenName     string `json:"screen_name"`
+		ConsumerKey    string `json:"consumer_key"`
+		ConsumerSecret string `json:"consumer_secret"`
+		AccessToken    string `json:"access_token"`
+		AccessSecret   string `json:"access_secret"`
+	} `json:"twitter"`
+}
 
-// func init() {
-// 	jsonData, err := ioutil.ReadFile("config/secrets.json")
-// 	if err != nil {
-// 		fmt.Println("Error reading JSON data:", err)
-// 		return
-// 	}
+var cfg Config
+var client *twitter.Client
+var stream *twitter.Stream
 
-// 	var cfg Config
-// 	json.Unmarshal(jsonData, &cfg)
+func init() {
+	jsonData, err := ioutil.ReadFile("config/secrets.json")
+	if err != nil {
+		fmt.Println("Error reading JSON data:", err)
+		return
+	}
 
-// 	if cfg.Twitter.ConsumerKey == "" || cfg.Twitter.ConsumerSecret == "" || cfg.Twitter.AccessToken == "" || cfg.Twitter.AccessSecret == "" {
-// 		log.Fatal("Consumer key/secret and Access token/secret required")
-// 	}
+	json.Unmarshal(jsonData, &cfg)
 
-// 	config := oauth1.NewConfig(cfg.Twitter.ConsumerKey, cfg.Twitter.ConsumerSecret)
-// 	token := oauth1.NewToken(cfg.Twitter.AccessToken, cfg.Twitter.AccessSecret)
-// 	// OAuth1 http.Client will automatically authorize Requests
-// 	httpClient := config.Client(oauth1.NoContext, token)
+	if cfg.Twitter.ConsumerKey == "" || cfg.Twitter.ConsumerSecret == "" || cfg.Twitter.AccessToken == "" || cfg.Twitter.AccessSecret == "" {
+		log.Fatal("Consumer key/secret and Access token/secret required")
+	}
 
-// 	// Twitter Client
-// 	client := twitter.NewClient(httpClient)
+	config := oauth1.NewConfig(cfg.Twitter.ConsumerKey, cfg.Twitter.ConsumerSecret)
+	token := oauth1.NewToken(cfg.Twitter.AccessToken, cfg.Twitter.AccessSecret)
+	httpClient := config.Client(oauth1.NoContext, token)
 
-// 	// Convenience Demux demultiplexed stream messages
-// 	demux := twitter.NewSwitchDemux()
+	// Twitter Client
+	client = twitter.NewClient(httpClient)
+}
 
-// 	demux.Tweet = func(tweet *twitter.Tweet) {
-// 		fmt.Printf("[%d] (@%s) %s\n", tweet.ID, tweet.User.ScreenName, tweet.Text)
-// 	}
+func Start() {
+	demux := twitter.NewSwitchDemux()
 
-// 	fmt.Println("Starting Stream...")
+	demux.Tweet = func(tweet *twitter.Tweet) {
+		fmt.Printf("[%d] (@%s) %s\n", tweet.ID, tweet.User.ScreenName, tweet.Text)
+	}
 
-// 	// handle tweets that mention the bot username
-// 	params := &twitter.StreamFilterParams{
-// 		Track:         []string{cfg.Twitter.ScreenName},
-// 		StallWarnings: twitter.Bool(true),
-// 	}
-// 	stream, err := client.Streams.Filter(params)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-// 	go demux.HandleChan(stream.Messages)
+	fmt.Println("Starting Stream...")
 
-// 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
-// 	ch := make(chan os.Signal)
-// 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-// 	log.Println(<-ch)
+	// handle tweets that mention the bot username
+	params := &twitter.StreamFilterParams{
+		Track:         []string{cfg.Twitter.ScreenName},
+		StallWarnings: twitter.Bool(true),
+	}
+	stream, err := client.Streams.Filter(params)
+	if err != nil {
+		fmt.Println(err)
+	}
+	go demux.HandleChan(stream.Messages)
+}
 
-// 	fmt.Println("Stopping Stream...")
-// 	stream.Stop()
-// }
+func Stop() {
+	fmt.Println("Stopping Stream...")
+	stream.Stop()
+}
