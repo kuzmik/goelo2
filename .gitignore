@@ -2,8 +2,8 @@
 config/secrets.json
 
 # binaries of various sorts
-goelo
-goelo.upx
+goelo2
+goelo2.upx
 
 # data of various types.
 data/bebot.sqlite3

@@ -1,11 +1,26 @@
 I don't know go.
 
 ### Setup
-```bash
-# put the discord token into env, and DON'T CHECK THAT SHIT IN.
-echo TOKEN_FROM_DISCORD > env
-chmod 600 env
 
+Setup the secrets that you will need
+```json
+{
+  "discord": {
+    "api_key": "YOUR DISCORD BOT TOKEN"
+  },
+  "twitter": {
+    "screen_name": "",
+    "consumer_key": "",
+    "consumer_secret": "",
+    "access_token": "",
+    "access_secret": "",
+  }
+}
+```
+
+Now install the required modules
+
+```bash
 go get -u github.com/bwmarrin/discordgo
 go get -u github.com/davecgh/go-spew/spew
 ```

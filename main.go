@@ -14,9 +14,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/getsentry/sentry-go"
-
 	"github.com/kuzmik/goelo2/src/bebot"
-	"github.com/kuzmik/goelo2/src/twitter"
+	// "github.com/kuzmik/goelo2/src/twitter"
 )
 
 var (
@@ -70,7 +69,7 @@ func init() {
 }
 
 func main() {
-	twitter.Start()
+	// twitter.Start()
 
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
@@ -199,14 +198,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Log the chatmessage to the db and add it to the markov model
 	msg := bebot.ChatMessage{
-		Timestamp: timestamp,
-		ServerID:  m.Message.GuildID,
-		Server:    server,
-		ChannelID: m.ChannelID,
-		Channel:   channel,
-		UserID:    m.Author.ID,
-		User:      author,
-		Message:   realMessage,
+		Timestamp:  timestamp,
+		ServerType: "discord",
+		ServerID:   m.Message.GuildID,
+		Server:     server,
+		ChannelID:  m.ChannelID,
+		Channel:    channel,
+		UserID:     m.Author.ID,
+		User:       author,
+		Message:    realMessage,
 	}
 
 	msg.Save()
