@@ -46,20 +46,24 @@ func init() {
 	if TokenFile != "" {
 		jsonData, err := ioutil.ReadFile(TokenFile)
 		if err != nil {
-			fmt.Println("Error reading JSON data:", err)
-			return
+			handleError("ERROR: Error reading JSON data:", err)
+			os.Exit(1)
 		}
 
 		var cfg Config
-		json.Unmarshal(jsonData, &cfg)
+		err = json.Unmarshal(jsonData, &cfg)
+		if err != nil {
+			handleError("ERROR: Error parsing JSON data:", err)
+			os.Exit(2)
+		}
 
 		Token = cfg.Discord.APIKey
 	}
 
 	// If no there is no token specified, either via commandline or via file, bail out
 	if Token == "" {
-		fmt.Println("You need to specify a token. Use --help for help")
-		return
+		fmt.Println("ERROR: you need to specify a token. Use --help for help")
+		os.Exit(4)
 	}
 
 	// Set up the sentry reportig
@@ -69,8 +73,6 @@ func init() {
 }
 
 func main() {
-	// twitter.Start()
-
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		handleError("Error creating bot", err)
@@ -123,7 +125,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	channel := ""
 	_channel, err := s.State.Channel(m.ChannelID)
 	if err != nil {
-		fmt.Println("Failure getting channel:", err)
+		handleError("Failure getting channel:", err)
 	}
 
 	// Don't accept DMs or any of the other channel types for now
