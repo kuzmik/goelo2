@@ -11,6 +11,7 @@ BUILD_TIME=`date +%FT%T%z`
 # Use linker flags to provide version/build settings to the target.
 # If we need debugging symbols, remove -s and -w
 LDFLAGS=-ldflags "-s -w -X=main.Version=$(VERSION) -X=main.Build=$(BUILD) -X=main.BuildTime=$BUILD_TIME)"
+LINUX_LDFLAGS=-ldflags "-s -w -X=main.Version=$(VERSION) -X=main.Build=$(BUILD) -X=main.BuildTime=$BUILD_TIME) -linkmode external -extldflags -static"
 
 # go source files, ignore vendor directory
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
@@ -23,6 +24,9 @@ $(TARGET): $(SRC)
 build: clean $(TARGET)
 	@true
 
+run: build
+	@./$(TARGET)
+
 clean:
 	@rm -f $(TARGET)
 
@@ -32,11 +36,10 @@ check:
 	@go vet ./...
 
 # cross compile for linux
+# brew install FiloSottile/musl-cross/musl-cross
 linux: clean $(TARGET)
-	@GOOS=linux go build $(STRIP_LDFLAGS) -o $(TARGET)
+	@CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ GOARCH=amd64 GOOS=linux CGO_ENABLED=1 go build $(LINUX_LDFLAGS) -o $(TARGET)
 
-run: build
-	@./$(TARGET)
-
+# brew install upx
 strip:
 	@upx --brute $(TARGET)
